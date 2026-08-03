@@ -1,0 +1,2 @@
+flake_id,image_path,material,na,oxide_nm,oxide_sd_nm,flake_x,flake_y,bg_x,bg_y,patch_px,afm_height_nm,afm_sd_nm,raman_layers,gamma,notes
+G01,images/G01.tif,graphene,0.90,285,5,742,518,120,96,16,1.05,0.15,1,srgb,monolayer confirmed by Raman 2D/G

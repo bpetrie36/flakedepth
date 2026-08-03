@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+out_*/
+results_*/
+flakedepth_out/
+*.aux
+*.log
+*.out
+*.synctex.gz
+.DS_Store
