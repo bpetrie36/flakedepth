@@ -224,7 +224,7 @@ def summarize(rows, mode, layer_nm, args):
     L.append(f"  fitted oxide across flakes: {ox.mean():.2f} +/- {ox.std():.2f} nm "
              f"(assumed {args.oxide})")
     L.append(f"  -> flakes on one wafer must agree. Scatter >> wafer tolerance means the model")
-    L.append(f"     is absorbing an unmodelled effect and the accuracy numbers above are void.")
+    L.append(f"     is absorbing an unmodeled effect and the accuracy numbers above are void.")
     g = np.array([[r["gain_r"], r["gain_g"], r["gain_b"]] for r in rows])
     L.append(f"  fitted gains: R {g[:,0].mean():.3f}+/-{g[:,0].std():.3f}  "
              f"G {g[:,1].mean():.3f}+/-{g[:,1].std():.3f}  B {g[:,2].mean():.3f}+/-{g[:,2].std():.3f}")
@@ -242,7 +242,7 @@ def confusion(rows):
     return "\n".join(out)
 
 def oxide_scan(args):
-    """Try candidate wafer oxides; the correct one minimises fitted-oxide scatter."""
+    """Try candidate wafer oxides; the correct one minimizes fitted-oxide scatter."""
     print("scanning candidate oxide thicknesses (consistency, not accuracy, is the test)\n")
     best = None
     for ox in [float(x) for x in args.oxide_scan_values.split(",")]:

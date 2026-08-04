@@ -61,5 +61,5 @@ results_*/summary.txt, results_*/confusion.txt, results_*/per_flake.csv
   tens of minutes. Always run the --limit 30 smoke test first.
 - Read diagnostics.txt first: it reports conditions under which the numbers are void.
 - The fitted-oxide scatter in summary.txt is the real validity check. Flakes on one
-  wafer must agree; large scatter means the model is absorbing something unmodelled.
+  wafer must agree; large scatter means the model is absorbing something unmodeled.
 - Windows uses backslashes in paths (core\dtmm.py, not core/dtmm.py).

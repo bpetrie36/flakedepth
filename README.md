@@ -1,6 +1,6 @@
 # Flake Depth
 
-Thickness of 2D-material flakes from a single colour micrograph, by inverting
+Thickness of 2D-material flakes from a single color micrograph, by inverting
 thin-film optics. No training data, no per-lab retraining.
 
 ## Install
@@ -20,7 +20,7 @@ Check the physics (expect peaks near 87/276 nm, C_max ~0.142):
 * `--na`: your OBJECTIVE's numerical aperture, engraved on the barrel next to the
   magnification (e.g. "20x/0.45"). It is a property of the objective, not the camera.
   REQUIRED. A wrong value silently rescales every thickness and is NOT caught by the
-  colour-fit verdict. Add `--verify-na` to have the tool fit NA from the images and
+  color-fit verdict. Add `--verify-na` to have the tool fit NA from the images and
   warn if it disagrees with what you supplied.
 * `--oxide`: SiO2 thickness in nm from your wafer spec. Don't know it? Use
   `--scan-oxide` and it will recover it from the images (no labels needed).
@@ -31,7 +31,7 @@ Per-image white balance is solved exactly from the bare substrate.
 
 ## Read the verdict first
 
-`summary.txt` reports a colour-fit residual and one of three verdicts:
+`summary.txt` reports a color-fit residual and one of three verdicts:
 
     < 0.08   USABLE - clean
     < 0.15   USABLE - with caution

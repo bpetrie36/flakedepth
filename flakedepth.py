@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-flakedepth.py - thickness of 2D-material flakes from a colour micrograph.
+flakedepth.py - thickness of 2D-material flakes from a color micrograph.
 
 ONE COMMAND. Point it at your own images and masks. It determines the acquisition
 parameters it can determine, tells you the ones it cannot, and refuses data it
@@ -19,7 +19,7 @@ INPUTS
                   it cannot be recovered from the image and a wrong value biases
                   thickness badly above NA 0.55.
   --oxide         wafer SiO2 thickness in nm from the wafer spec. If you don't know
-                  it, use --scan-oxide (needs no labels: it minimises colour-fit
+                  it, use --scan-oxide (needs no labels: it minimizes color-fit
                   residual, not label agreement).
 
 WHAT IT WORKS OUT FOR YOU
@@ -29,7 +29,7 @@ WHAT IT WORKS OUT FOR YOU
   * oxide thickness, if you ask for --scan-oxide
 
 WHAT IT REFUSES
-  If no oxide value can explain the observed flake/substrate colour ratios, the run
+  If no oxide value can explain the observed flake/substrate color ratios, the run
   is flagged UNUSABLE. That happens when images carry processing beyond white balance
   (contrast enhancement, tone curves) or when the material is too low-contrast. This
   is a feature: the check needs no ground truth.
@@ -53,8 +53,8 @@ VERSION = "1.2"
 MATERIALS = {"graphene": (n_graphene, GRAPHENE_LAYER_NM), "hbn": (n_hbn, HBN_LAYER_NM),
              "mos2": (n_mos2, MOS2_LAYER_NM), "mose2": (n_mose2, MOSE2_LAYER_NM),
              "ws2": (n_ws2, WS2_LAYER_NM), "wse2": (n_wse2, WSE2_LAYER_NM)}
-UNUSABLE = 0.15          # colour-fit above this: images not interpretable
-GOOD     = 0.08          # colour-fit below this: clean
+UNUSABLE = 0.15          # color-fit above this: images not interpretable
+GOOD     = 0.08          # color-fit below this: clean
 
 def decode(x, mode):
     if mode == "linear":
@@ -123,7 +123,7 @@ def fit_quality(data, tox, n_fn, na, d_grid):
     return float(np.median([e for _, e in r])), [d for d, _ in r]
 
 def main():
-    p = argparse.ArgumentParser(description="Flake thickness from a colour micrograph.")
+    p = argparse.ArgumentParser(description="Flake thickness from a color micrograph.")
     p.add_argument("--images", required=True); p.add_argument("--masks", required=True)
     p.add_argument("--material", required=True, choices=sorted(MATERIALS))
     p.add_argument("--na", type=float, required=True,
@@ -167,11 +167,11 @@ def main():
         for tox in oxides:
             q, _ = fit_quality(data, float(tox), n_fn, a.na, d_grid)
             if len(oxides) > 1:
-                print(f"     oxide {tox:6.1f} nm  colour-fit {q:.4f}", flush=True)
+                print(f"     oxide {tox:6.1f} nm  color-fit {q:.4f}", flush=True)
             if best is None or q < best[0]:
                 best = (q, g, float(tox), data)
     q, gamma, tox, data = best
-    print(f"\nSELECTED: transfer function '{gamma}', oxide {tox:.1f} nm, colour-fit {q:.4f}")
+    print(f"\nSELECTED: transfer function '{gamma}', oxide {tox:.1f} nm, color-fit {q:.4f}")
     if a.gamma == "auto":
         print("  (both sRGB and linear were tested; the lower-residual one was chosen)")
 
@@ -183,17 +183,17 @@ def main():
             qq = min(fit_quality(data, float(t), n_fn, na_c, d_grid)[0] for t in oxides) \
                  if len(oxides) > 1 else fit_quality(data, tox, n_fn, na_c, d_grid)[0]
             rows_na.append((qq, na_c))
-            print(f"     NA {na_c:.2f}  colour-fit {qq:.4f}" + ("   <- you specified" if abs(na_c-a.na)<1e-6 else ""))
+            print(f"     NA {na_c:.2f}  color-fit {qq:.4f}" + ("   <- you specified" if abs(na_c-a.na)<1e-6 else ""))
         rows_na.sort()
         q_best, na_best = rows_na[0]
         q_user = next(qq for qq, nc in rows_na if abs(nc - a.na) < 1e-6) if any(
             abs(nc - a.na) < 1e-6 for _, nc in rows_na) else None
-        print(f"  best-fitting NA: {na_best:.2f} (colour-fit {q_best:.4f})")
+        print(f"  best-fitting NA: {na_best:.2f} (color-fit {q_best:.4f})")
         if q_user is not None and q_user > q_best * 1.25:
             print(f"  WARNING: your --na {a.na:.2f} fits worse ({q_user:.4f}) than NA {na_best:.2f} "
                   f"({q_best:.4f}).")
             print( "           A wrong NA silently rescales every thickness and is NOT caught by")
-            print( "           the colour-fit verdict. Check the number engraved on your objective.")
+            print( "           the color-fit verdict. Check the number engraved on your objective.")
         elif q_user is not None:
             print(f"  consistent with your --na {a.na:.2f}.")
         print( "  Note: NA and oxide are partially degenerate; treat this as a cross-check,")
@@ -203,7 +203,7 @@ def main():
                "USABLE - with caution" if q < UNUSABLE else "UNUSABLE")
     print(f"  VERDICT: {verdict}")
     if q >= UNUSABLE:
-        print("  No oxide value explains the observed colour ratios. Your images likely carry")
+        print("  No oxide value explains the observed color ratios. Your images likely carry")
         print("  processing beyond white balance (contrast enhancement, tone curve), or the")
         print("  material is too low-contrast at these thicknesses. Thicknesses below are NOT")
         print("  trustworthy. Re-acquire with fixed white balance and no auto-contrast.")
@@ -213,7 +213,7 @@ def main():
     for cls, obs, stem, npx in data:
         d, e = invert(obs, curve, d_grid)
         rows.append(dict(image=stem, mask_class=cls, n_px=npx, thickness_nm=round(d, 4),
-                         layers=round(d / layer, 3), colour_resid=round(e, 5),
+                         layers=round(d / layer, 3), color_resid=round(e, 5),
                          flag=("ok" if e < UNUSABLE else "poor_fit")))
     _os.makedirs(a.out, exist_ok=True)
     with open(_os.path.join(a.out, "thickness.csv"), "w", newline="") as f:
@@ -222,7 +222,7 @@ def main():
     L = [f"flakedepth {VERSION}", f"material {a.material}   NA {a.na}",
          f"transfer function: {gamma}   oxide: {tox:.1f} nm"
          + ("  (recovered from images)" if a.scan_oxide else "  (from wafer spec)"),
-         f"colour-fit residual: {q:.4f}   VERDICT: {verdict}", f"flakes: {len(rows)}", ""]
+         f"color-fit residual: {q:.4f}   VERDICT: {verdict}", f"flakes: {len(rows)}", ""]
     d = np.array([r["thickness_nm"] for r in rows]); lay = d / layer
     L += [f"thickness: median {np.median(d):.3f} nm  range {d.min():.3f}-{d.max():.3f} nm",
           f"layers:    median {np.median(lay):.2f}   range {lay.min():.2f}-{lay.max():.2f}"]

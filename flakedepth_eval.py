@@ -52,7 +52,7 @@ MATERIALS = {
     "hbn":      (n_hbn,      HBN_LAYER_NM),
 }
 
-# ------------------------------------------------------------------ colour handling
+# ------------------------------------------------------------------ color handling
 def to_linear(rgb01, gamma):
     """Undo the camera's transfer function. rgb01 in [0,1]."""
     if gamma == "linear":
@@ -112,7 +112,7 @@ def evaluate_row(row, warn):
     y_b, sd_b, n_b = sample_patch(img01, int(row["bg_x"]), int(row["bg_y"]), half, gamma)
 
     if np.allclose(y_f, y_b, atol=2e-3):
-        warn.append(f"{row['flake_id']}: flake and background colours nearly identical "
+        warn.append(f"{row['flake_id']}: flake and background colors nearly identical "
                     f"- check coordinates")
     if (sd_b / np.maximum(y_b, 1e-6)).max() > 0.15:
         warn.append(f"{row['flake_id']}: background patch is non-uniform "
@@ -147,7 +147,7 @@ def evaluate_row(row, warn):
     if max(out["gain_r"], out["gain_g"], out["gain_b"]) > 1.6 or \
        min(out["gain_r"], out["gain_g"], out["gain_b"]) < 0.6:
         warn.append(f"{row['flake_id']}: extreme fitted gains - likely auto-white-balance "
-                    f"or an unmodelled tone curve")
+                    f"or an unmodeled tone curve")
     if r["alts"] and r["alts"][0][1] < 10:
         warn.append(f"{row['flake_id']}: AMBIGUOUS - rival thickness at "
                     f"{r['alts'][0][0]:.1f} nm within {r['alts'][0][1]:.1f} posterior units")
@@ -193,7 +193,7 @@ def summarize(rows, path, physics_mode):
     ox = np.array([r["oxide_fit_nm"] for r in rows])
     L.append(f"  fitted oxide: mean {ox.mean():.1f} nm, sd {ox.std():.1f} nm across flakes")
     L.append(f"    -> flakes on one wafer must agree. Scatter >> wafer tolerance means the")
-    L.append(f"       model is absorbing an unmodelled effect (NA, gamma, or illumination).")
+    L.append(f"       model is absorbing an unmodeled effect (NA, gamma, or illumination).")
     amb = [r for r in rows if r["n_modes"] > 1]
     L.append(f"  flakes flagged ambiguous: {len(amb)}/{len(rows)}")
     open(path, "w").write("\n".join(L) + "\n")

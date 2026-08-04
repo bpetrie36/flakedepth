@@ -77,12 +77,12 @@ def _gpw(x, mu, s1, s2):
 
 _CMF_TAB = jnp.asarray(_DAT["cmf"]); _LAM_TAB = jnp.asarray(_DAT["lam"])
 def cie_cmfs(lam_nm):
-    """Exact CIE 1931 2-deg observer (tabulated, via colour-science)."""
+    """Exact CIE 1931 2-deg observer (tabulated, via color-science)."""
     return jnp.stack([jnp.interp(lam_nm, _LAM_TAB, _CMF_TAB[i]) for i in range(3)])
 
 _D65_TAB = jnp.asarray(_DAT["d65"])
 def d65(lam_nm):
-    """Exact CIE D65 SPD (tabulated, via colour-science)."""
+    """Exact CIE D65 SPD (tabulated, via color-science)."""
     return jnp.interp(lam_nm, _LAM_TAB, _D65_TAB)
 
 _XYZ2RGB = jnp.array([[ 3.2406, -1.5372, -0.4986],

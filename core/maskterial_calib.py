@@ -4,7 +4,7 @@ maskterial_calib.py - two-stage evaluation for white-balanced micrographs.
 
 WHY THIS EXISTS
   Public flake datasets are white-balanced on the bare substrate (the wafer reads
-  neutral grey). Three free channel gains can then fit ANY substrate colour, so the
+  neutral grey). Three free channel gains can then fit ANY substrate color, so the
   bare-substrate term carries no information and the full joint estimate becomes
   under-determined: thickness, oxide and 5 illuminant coefficients all float against
   6 observed numbers. Widening the gain prior does not help; it removes the last anchor.
@@ -17,7 +17,7 @@ WHY THIS EXISTS
   Evaluation happens on the TEST split, which the calibration never saw.
 
   This is the honest analogue of what learning baselines do (MaskTerial adapts with
-  5-10 labelled images per material). Here the adaptation is one physical constant.
+  5-10 labeled images per material). Here the adaptation is one physical constant.
 
 USAGE
   # stage 1: calibrate the oxide on the train split (uses labels)
@@ -115,7 +115,7 @@ def ratio_curve(tox, n_fn, na, d_grid):
     return np.array([np.array(col(float(d)) / b) for d in d_grid])
 
 def invert(obs, curve, d_grid):
-    """Nearest point on the predicted ratio curve, in log-colour space."""
+    """Nearest point on the predicted ratio curve, in log-color space."""
     e = np.linalg.norm(np.log(np.abs(curve) + 1e-9) - np.log(np.abs(obs) + 1e-9), axis=1)
     i = int(np.argmin(e))
     return float(d_grid[i]), float(e[i])
@@ -165,7 +165,7 @@ def main():
                 score = resid / max(abs(sl), 1e-6)
             else:
                 score = np.std(ds)
-            print(f"  tox={tox:6.1f} nm  colour-fit={np.mean(errs):.4f}  "
+            print(f"  tox={tox:6.1f} nm  color-fit={np.mean(errs):.4f}  "
                   f"layer-consistency={score:8.3f}", flush=True)
             # select on COLOUR FIT: how well the predicted ratio curve explains the
             # observed ratios. The layer-consistency column is reported for information
@@ -174,9 +174,9 @@ def main():
             cf = float(np.mean(errs))
             if best is None or cf < best[0]:
                 best = (cf, tox, score)
-        print(f"\nBEST OXIDE: {best[1]:.1f} nm  (colour-fit {best[0]:.4f}, layer-consistency {best[2]:.3f})")
+        print(f"\nBEST OXIDE: {best[1]:.1f} nm  (color-fit {best[0]:.4f}, layer-consistency {best[2]:.3f})")
         if best[0] > 0.15:
-            print("WARNING: colour-fit > 0.15 means the physics cannot reproduce the observed")
+            print("WARNING: color-fit > 0.15 means the physics cannot reproduce the observed")
             print("         ratios at ANY oxide. The images carry processing beyond white")
             print("         balance and are not usable for absolute metrology.")
         print(f"Now run stage 2:\n  --oxide {best[1]:.1f} (omit --calibrate)")
@@ -189,7 +189,7 @@ def main():
     for cls, obs, stem in data:
         d, e = invert(obs, curve, d_grid)
         rows.append(dict(image=stem, label=cls, d_hat_nm=round(d, 4),
-                         layers_hat=round(d / layer, 3), colour_resid=round(e, 5)))
+                         layers_hat=round(d / layer, 3), color_resid=round(e, 5)))
     lab = np.array([r["label"] for r in rows]); hat = np.array([r["layers_hat"] for r in rows])
     rnd = np.round(hat).astype(int)
     _os.makedirs(a.out, exist_ok=True)
@@ -213,7 +213,7 @@ def main():
                   f"intercept {ic:+.3f} nm, r = {r_:.4f}",
               "  slope near the layer height means the method tracks true thickness;",
               "  r near 1 means it orders flakes correctly even if scale is off."]
-    L += ["", f"median colour residual: {np.median([r['colour_resid'] for r in rows]):.4f}",
+    L += ["", f"median color residual: {np.median([r['color_resid'] for r in rows]):.4f}",
           "  (large values mean the images carry processing beyond white balance)"]
     s = "\n".join(L)
     open(_os.path.join(a.out, "summary.txt"), "w").write(s + "\n")
