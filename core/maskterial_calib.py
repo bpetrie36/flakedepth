@@ -70,7 +70,7 @@ def comps(m, min_px):
     lab, n = ndimage.label(m)
     return [lab == k for k in range(1, n+1) if (lab == k).sum() >= min_px]
 
-def harvest(ds, split, min_px, limit, gamma='srgb'):
+def harvest(ds, split, min_px, limit, gamma='linear'):
     """Return list of (label_class, ratio_rgb) — the gain-invariant observable."""
     from PIL import Image
     out = []
@@ -126,8 +126,8 @@ def main():
     p.add_argument("--material", required=True)
     p.add_argument("--na", type=float, default=0.45)
     p.add_argument("--min-px", dest="min_px", type=int, default=300)
-    p.add_argument("--gamma", default="srgb",
-                   help="srgb (default) | linear | a number. Try 'linear' if residual grows with thickness.")
+    p.add_argument("--gamma", default="linear",
+                   help="linear (default; MaskTerial imagery is linear) | srgb | a number. Decoding linear images as srgb rescales thickness by ~2x.")
     p.add_argument("--limit", type=int, default=120)
     p.add_argument("--calibrate", action="store_true", help="stage 1: fit oxide on train split")
     p.add_argument("--oxide", type=float, help="stage 2: oxide from calibration")
