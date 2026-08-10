@@ -1,55 +1,72 @@
 # Flake Depth
 
-Thickness of 2D-material flakes from a single color micrograph, by inverting
-thin-film optics. No training data, no per-lab retraining.
+Thickness estimation for 2D-material flakes from a single colour micrograph, by
+inverting thin-film optics at inference time. No training data.
 
 ## Install
+    pip install -r requirements.txt
 
-    pip install jax numpy scipy matplotlib pillow
-
-Check the physics (expect peaks near 87/276 nm, C_max ~0.142):
-
+## Quick check (verifies the physics)
     python core/dtmm.py
+Expect contrast peaks near 87/276 nm oxide, C_max ~0.142, and a bare-substrate
+linear RGB of about [0.110, 0.098, 0.177] at 90 nm oxide.
 
-## Use it on YOUR images
+## Two non-negotiable inputs
 
-    python flakedepth.py --images IMG_DIR --masks MASK_DIR \
-                         --material graphene --na 0.45 --oxide 90
+**The objective's numerical aperture.** A normal-incidence approximation is fine
+at NA <= 0.55 and fails badly at NA 0.9. NA cannot be recovered from the image,
+and it is engraved on the objective. Pass `--na`.
 
-* `--masks`: one file per image, same filename stem. 0 = bare substrate, >0 = flake.
-* `--na`: your OBJECTIVE's numerical aperture, engraved on the barrel next to the
-  magnification (e.g. "20x/0.45"). It is a property of the objective, not the camera.
-  REQUIRED. A wrong value silently rescales every thickness and is NOT caught by the
-  color-fit verdict. Add `--verify-na` to have the tool fit NA from the images and
-  warn if it disagrees with what you supplied.
-* `--oxide`: SiO2 thickness in nm from your wafer spec. Don't know it? Use
-  `--scan-oxide` and it will recover it from the images (no labels needed).
-* Add `--labels-are-layers` if your mask values are layer counts, to score agreement.
+**The transfer function.** Whether the file holds linear radiance or an
+sRGB-encoded image. Getting this wrong compresses contrast by roughly a factor
+of two and rescales recovered thickness by about the same, while leaving the
+per-image residual clean, so nothing warns you. The MaskTerial datasets are
+linear, and their documentation does not say so.
 
-The transfer function (sRGB vs linear) is detected automatically.
-Per-image white balance is solved exactly from the bare substrate.
+`maskterial_eval.py` and `core/maskterial_calib.py` default to **linear**.
+Override with:
 
-## Read the verdict first
+    set FLAKEDEPTH_GAMMA=srgb        # Windows
+    export FLAKEDEPTH_GAMMA=srgb     # macOS / Linux
 
-`summary.txt` reports a color-fit residual and one of three verdicts:
+`flakedepth.py --gamma auto` scores both and reports which it chose.
 
-    < 0.08   USABLE - clean
-    < 0.15   USABLE - with caution
-    >= 0.15  UNUSABLE
+## Usage
 
-UNUSABLE means no oxide value explains your images: they likely carry contrast
-enhancement or a tone curve, or the material is too low-contrast. Re-acquire with
-FIXED white balance and no auto-contrast. This check needs no ground truth.
+    python flakedepth.py --images IMG_DIR --masks MASK_DIR --material graphene --na 0.45 --oxide 90
 
-## Acquisition guidance
+Read the colour-fit verdict first: below 0.08 is clean, above 0.15 means the
+physics cannot reproduce the observed ratios at any oxide and the thicknesses
+should not be trusted.
 
-Fixed (not auto) white balance, no auto-contrast, no tone curve beyond sRGB,
-uncompressed if possible, and record the objective NA and wafer oxide spec.
+See `RUN.md` for the MaskTerial workflow, including partitioning a dataset by
+exfoliation run before fitting a global oxide. See `DATA.md` for data sources.
+
+## Interpreting the self-consistency check
+Flakes on one wafer must yield the same fitted oxide. That check is reported as
+median and MAD rather than mean and standard deviation, because 10-40% of flakes
+per acquisition land in a joint thickness-nuisance ridge; a mean would be
+dominated by them and would void otherwise correct runs. The ridge failures are
+almost all unimodal, so the ambiguity flag does not catch them.
 
 ## Layout
-
-    flakedepth.py   the tool
-    core/           forward model, estimator, baselines
+    core/           forward model (dtmm), scene model, estimator, baselines,
+                    restricted-mode calibration
     experiments/    every benchmark in the paper, with seeds
-    paper/          manuscript source
-    tools/          browser demo
+    paper/          manuscript source and figures
+    flakedepth.py           unified tool: run this on new data
+    flakedepth_eval.py      AFM-registered evaluation from a manifest
+    maskterial_eval.py      full joint evaluation on a MaskTerial dataset
+    set_map.py              which acquisitions a dataset contains
+    build_acq_corpus.py     re-partition datasets by exfoliation run
+    per_set.py              contrast and substrate colour per acquisition
+    collect_runs.py         assemble a per-acquisition table from a batch
+    stability.py            bootstrap CIs, subsample curves, pairwise tests
+
+## Reproducibility note
+`maskterial_eval.py` and `core/maskterial_calib.py` previously hard-coded sRGB
+decoding with no way to change it, and `flakedepth_eval.py` defaulted its
+per-row transfer function to sRGB. Any result produced with those versions on
+linear imagery is affected. The self-consistency check also previously reported
+mean and standard deviation of the fitted oxide, which the ridge failures
+dominate, so it could declare correct runs void.

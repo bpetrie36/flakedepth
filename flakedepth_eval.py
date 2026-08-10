@@ -18,7 +18,9 @@ MANIFEST FORMAT (one row per flake; see make_manifest_template())
   bg_x/bg_y       : pixel coordinates of clean bare substrate, same field of view.
   patch_px        : half-width of the sampling square (16 is a good default).
   na              : objective numerical aperture, e.g. 0.90. REQUIRED.
-  gamma           : 'srgb' (default), 'linear', or a numeric gamma value.
+  gamma           : 'linear' (default; MaskTerial imagery is linear), 'srgb',
+                    or a numeric gamma value. Getting this wrong rescales
+                    recovered thickness by ~2x with a clean per-image residual.
   afm_height_nm   : AFM step height. Leave blank if unknown; row still runs but
                     contributes only to the internal-consistency checks.
 
@@ -106,7 +108,7 @@ def evaluate_row(row, warn):
     if row["image_path"].lower().endswith((".jpg", ".jpeg")):
         warn.append(f"{row['flake_id']}: JPEG source - compression artifacts bias region means")
 
-    gamma = row.get("gamma", "srgb").strip() or "srgb"
+    gamma = row.get("gamma", "linear").strip() or "linear"
     half = int(row.get("patch_px") or 16)
     y_f, sd_f, n_f = sample_patch(img01, int(row["flake_x"]), int(row["flake_y"]), half, gamma)
     y_b, sd_b, n_b = sample_patch(img01, int(row["bg_x"]), int(row["bg_y"]), half, gamma)

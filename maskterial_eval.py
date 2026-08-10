@@ -57,8 +57,26 @@ MATERIALS = {
     "wse2":     (n_wse2,     WSE2_LAYER_NM),
 }
 
+def _robust(a):  # patched by patch_repo.py: robust
+    a = np.asarray(a, dtype=float)
+    m = float(np.median(a))
+    return m, float(1.4826 * np.median(np.abs(a - m)))
+
 def srgb_to_linear(x):
     return np.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+
+# --- patched by patch_repo.py: transfer function is selectable and defaults to
+# LINEAR, because the MaskTerial images are radiometrically linear. Override
+# with the FLAKEDEPTH_GAMMA environment variable (linear | srgb | a number).
+_FLAKEDEPTH_GAMMA = os.environ.get("FLAKEDEPTH_GAMMA", "linear")
+
+def _decode(x):
+    if _FLAKEDEPTH_GAMMA == "linear":
+        return x
+    if _FLAKEDEPTH_GAMMA == "srgb":
+        return srgb_to_linear(x)
+    return x ** float(_FLAKEDEPTH_GAMMA)
+# --- end patch
 
 def erode(mask, iters=2):
     try:
@@ -112,7 +130,7 @@ def components(mask, min_px):
 def load_pair(img_path, mask_path):
     from PIL import Image
     img = np.asarray(Image.open(img_path).convert("RGB")).astype(np.float64)
-    img = srgb_to_linear(img / 255.0)
+    img = _decode(img / 255.0)
     mask = np.asarray(Image.open(mask_path))
     if mask.ndim == 3:
         mask = mask[:, :, 0]
@@ -221,13 +239,13 @@ def summarize(rows, mode, layer_nm, args):
     L.append(f"  median signed      {np.median(res):+.3f} nm")
     L.append("")
     L.append("SELF-CALIBRATION CONSISTENCY (falsifiable; needs no ground truth)")
-    L.append(f"  fitted oxide across flakes: {ox.mean():.2f} +/- {ox.std():.2f} nm "
+    L.append(f"  fitted oxide across flakes: {_robust(ox)[0]:.2f} +/- {_robust(ox)[1]:.2f} nm "
              f"(assumed {args.oxide})")
     L.append(f"  -> flakes on one wafer must agree. Scatter >> wafer tolerance means the model")
     L.append(f"     is absorbing an unmodeled effect and the accuracy numbers above are void.")
     g = np.array([[r["gain_r"], r["gain_g"], r["gain_b"]] for r in rows])
-    L.append(f"  fitted gains: R {g[:,0].mean():.3f}+/-{g[:,0].std():.3f}  "
-             f"G {g[:,1].mean():.3f}+/-{g[:,1].std():.3f}  B {g[:,2].mean():.3f}+/-{g[:,2].std():.3f}")
+    L.append(f"  fitted gains: R {_robust(g[:,0])[0]:.3f} +/- {_robust(g[:,0])[1]:.3f}  "
+             f"G {_robust(g[:,1])[0]:.3f} +/- {_robust(g[:,1])[1]:.3f}  B {_robust(g[:,2])[0]:.3f} +/- {_robust(g[:,2])[1]:.3f}")
     amb = sum(1 for r in rows if r["n_modes"] > 1)
     L.append(f"  flagged ambiguous: {amb}/{len(rows)} ({100*amb/len(rows):.1f}%)")
     return "\n".join(L)
@@ -250,7 +268,7 @@ def oxide_scan(args):
         print(f"[{ox:g} nm] compiling + fitting {args.limit} flakes...", flush=True)
         rows, _, _, _ = run(args)
         f = np.array([r["oxide_fit_nm"] for r in rows])
-        print(f"  assumed {ox:6.1f} nm -> fitted {f.mean():7.2f} +/- {f.std():5.2f} nm  (n={len(rows)})")
+        print(f"  assumed {ox:6.1f} nm -> fitted {_robust(f)[0]:7.2f} +/- {_robust(f)[1]:5.2f} nm  (n={len(rows)})")
         if best is None or f.std() < best[1]:
             best = (ox, f.std(), f.mean())
     print(f"\nmost self-consistent: assumed {best[0]} nm, fitted {best[2]:.2f} +/- {best[1]:.2f} nm")

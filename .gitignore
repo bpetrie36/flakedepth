@@ -10,3 +10,5 @@ flakedepth_out/
 *.out
 *.synctex.gz
 .DS_Store
+*.bak
+*.bak2
