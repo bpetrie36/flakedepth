@@ -1,6 +1,6 @@
 # Flake Depth
 
-Thickness estimation for 2D-material flakes from a single colour micrograph, by
+Thickness estimation for 2D-material flakes from a single color micrograph, by
 inverting thin-film optics at inference time. No training data.
 
 ## Install
@@ -35,7 +35,7 @@ Override with:
 
     python flakedepth.py --images IMG_DIR --masks MASK_DIR --material graphene --na 0.45 --oxide 90
 
-Read the colour-fit verdict first: below 0.08 is clean, above 0.15 means the
+Read the color-fit verdict first: below 0.08 is clean, above 0.15 means the
 physics cannot reproduce the observed ratios at any oxide and the thicknesses
 should not be trusted.
 
@@ -59,7 +59,7 @@ almost all unimodal, so the ambiguity flag does not catch them.
     maskterial_eval.py      full joint evaluation on a MaskTerial dataset
     set_map.py              which acquisitions a dataset contains
     build_acq_corpus.py     re-partition datasets by exfoliation run
-    per_set.py              contrast and substrate colour per acquisition
+    per_set.py              contrast and substrate color per acquisition
     collect_runs.py         assemble a per-acquisition table from a batch
     stability.py            bootstrap CIs, subsample curves, pairwise tests
 

@@ -3,11 +3,23 @@
 maskterial_calib.py - two-stage evaluation for white-balanced micrographs.
 
 WHY THIS EXISTS
-  Public flake datasets are white-balanced on the bare substrate (the wafer reads
-  neutral grey). Three free channel gains can then fit ANY substrate color, so the
-  bare-substrate term carries no information and the full joint estimate becomes
-  under-determined: thickness, oxide and 5 illuminant coefficients all float against
-  6 observed numbers. Widening the gain prior does not help; it removes the last anchor.
+  SOME flake datasets are white-balanced on the bare substrate, so the wafer reads
+  neutral gray; hBN_Thin is one (substrate [156,159,154], inter-image IQR
+  [2.0,2.2,0.2]). Three free channel gains then fit ANY substrate color, the
+  bare-substrate term carries no information, and the full joint estimate becomes
+  under-determined: thickness, oxide and 5 illuminant coefficients float against
+  6 observed numbers.
+
+  OTHERS are not. GrapheneL's substrate reads [113,107,151] against a forward-model
+  prediction of [0.110,0.098,0.177] at 90 nm oxide - both strongly blue. There the
+  substrate term does carry information, the full joint estimate is usable, and this
+  restricted mode is a robustness trade rather than a necessity. Check the substrate
+  color against the model prediction before assuming which case you are in.
+
+  Note on the gain prior: widening sigma_g does help somewhat on real images, where
+  the overall exposure is physically arbitrary and fits near 4 against a prior centered
+  at 1. On a paired 39-flake test, sigma_g 0.1 -> 1.5 tightened the label-free
+  fitted-oxide MAD from 7.13 to 5.22 nm. It does not touch the joint ridge.
 
   The fix is to restore identifiability by fixing what the image cannot tell us:
     * illuminant is pinned (c = 0, reference SPD)

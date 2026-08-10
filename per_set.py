@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-per_set.py - contrast and substrate colour per ACQUISITION, not per dataset.
+per_set.py - contrast and substrate color per ACQUISITION, not per dataset.
 
 The dataset-level analysis is done: GrapheneL/M/H are overlapping samplings of
 one pool of named acquisitions, shared images are pixel-identical, and the

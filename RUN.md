@@ -19,7 +19,7 @@ between 0% and 90% exact layer agreement.
 
 `maskterial_eval.py` and `core/maskterial_calib.py` now default to **linear**.
 To process imagery that really is sRGB-encoded, or to reproduce the previous
-behaviour:
+behavior:
 
 ```
 set FLAKEDEPTH_GAMMA=srgb          # Windows
@@ -97,7 +97,7 @@ python core\maskterial_calib.py --dataset .\by_acquisition\<ACQ> --material grap
        --calibrate --oxide-range "LOW,HIGH,0.5" --limit 60 --out cal_fine
 ```
 
-Select on **colour-fit**, not on layer-consistency. If the reported best sits at
+Select on **color-fit**, not on layer-consistency. If the reported best sits at
 either end of the range, the true minimum is outside it: widen and re-run. A
 value pinned at a range boundary is not a measurement.
 
@@ -148,6 +148,6 @@ For AFM-registered evaluation on your own data, use `flakedepth_eval.py` with
   unimodal, and the ambiguity flag does not catch them. Judge a run by the median
   and MAD, not by the mean.
 - On real images the overall exposure is arbitrary and fits around 4, against a
-  log-gain prior centred at 1 with width 0.1. Widening that prior tightens the
+  log-gain prior centered at 1 with width 0.1. Widening that prior tightens the
   fitted-oxide MAD but does not fix the ridge.
 - Windows uses backslashes in paths (`core\dtmm.py`, not `core/dtmm.py`).

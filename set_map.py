@@ -119,7 +119,7 @@ def main():
                 A(f"  {n}: {fname}  [manifest, {len(got)} set names for this split]")
                 declared.setdefault(n, set()).update(got)
             else:
-                A(f"  {n}: {fname}  [unrecognised: {payload}]")
+                A(f"  {n}: {fname}  [unrecognized: {payload}]")
     A("")
     A(f"global stem->set index built from {len(global_index)} attributed images")
     A("")
