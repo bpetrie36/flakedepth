@@ -1,0 +1,10 @@
+SYNTHETIC GATE TEST - exact ground truth, one wafer per material
+wafer 285 nm, prior sd 5, normal incidence, gate 10 nm, failure > 5.8 nm
+
+  material     n  fails   ref ox  kept  kept fail  rejected  precision   recall  modeflag
+  graphene    30      2    285.2    30          2         0       nan%     0.0%    2/5   
+
+A near-100% recall with a clean kept set across materials of differing layer
+height and dispersion means the gate follows from the ridge geometry rather
+than from anything specific to graphene. Ground truth is exact here, so
+nothing depends on annotation quality.

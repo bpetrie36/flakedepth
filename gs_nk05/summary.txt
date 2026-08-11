@@ -1,0 +1,18 @@
+SYNTHETIC GATE TEST - exact ground truth, one wafer per material
+wafer 90 nm, prior sd 10, normal incidence, gate 10 nm, failure > 5.8 nm, dispersion error 5%
+
+  material     n  fails   ref ox  kept  kept fail  rejected  precision   recall  modeflag
+  graphene    80      7     90.2    77          4         3     100.0%    42.9%    6/31  
+
+READING
+  With a CORRECT forward model (--nk-error 0) the estimator's only failure
+  mode is a genuine two-thickness ambiguity: multimodal, and the nuisances
+  stay put. The mode-count flag catches those and the oxide gate has nothing
+  to see. On real micrographs the reverse holds - failures are unimodal and
+  the oxide is displaced - which says the real failures come from model
+  misspecification rather than from ambiguity. Raising --nk-error should
+  therefore move the synthetic signature toward the real one: mode-flag
+  recall falling, oxide-gate recall rising. If it does, the detector's
+  mechanism is established. If it does not, the real-data result stands as
+  an empirical regularity with its mechanism open, and should be reported
+  that way.
