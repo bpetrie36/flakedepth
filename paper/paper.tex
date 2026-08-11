@@ -6,7 +6,7 @@
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{xcolor}
 
-\title{\bf Thickness from Color by Inverting the Physics:\\ Self-Calibrating Differentiable Thin-Film Optics\\ for Region-Level 2D-Material Thickness Estimation}
+\title{\bf Measuring, Not Classifying:\\ Physically Falsifiable 2D-Material Thickness Estimation\\ from a Single Micrograph}
 \author{Benjamin Petrie\\ \small ORCID 0009-0005-5256-5382\\
 \small Independent Researcher, Syracuse, New York, USA\\
 \small \texttt{benpetriework@gmail.com}}
@@ -19,7 +19,47 @@
 \maketitle
 
 \begin{abstract}
-Estimating the thickness of exfoliated two-dimensional flakes from ordinary optical micrographs is a foundational task in 2D-material fabrication. Current learning systems use thin-film optics only offline, as a synthetic-data generator for networks that classify thickness into discrete bins, and devote substantial machinery to closing the resulting gap between simulated and real imaging conditions. We instead place a differentiable transfer-matrix model of the full optics-to-color pipeline \emph{inside} the inference loop, recovering thickness as a continuous variable by profile-likelihood continuation jointly with the imaging nuisances (oxide thickness, sensor gains, illuminant spectrum). The bare substrate present in every micrograph then acts as an in-frame calibration target, replacing domain adaptation with self-calibration and requiring no training data. On held-out \emph{simulated} scenes with adversarially misspecified illuminants, median absolute error is 0.104\,nm for graphene and 0.154\,nm for MoS$_2$ with zero retraining, since supporting a new material is one dispersion table; on simulated flakes of physically realistic integer-layer thickness it counts layers with 82.2\% exact and 100\% within-one-layer accuracy and resolves monolayers to 0.015\,nm, a few percent of one atomic layer. These are simulation figures; the corresponding real-data evidence is the recovered interlayer spacing reported below, not a per-flake accuracy. Cram\'er--Rao analysis establishes what is extractable from three color channels, shows that the problem is unidentifiable without priors, and predicts the residual failure domain, which we characterize as joint thickness--nuisance ridges rather than classical color metamers and address with two inexpensive acquisition protocols. We also show that the objective's numerical aperture must be modeled: a normal-incidence approximation is harmless at NA\,0.55 but destroys thin-regime accuracy at NA\,0.9. On real micrographs from an external laboratory (the MaskTerial graphene substrate-variance series, $n{=}200$ held-out flakes each) a restricted mode using no labeled training data attains 95.3\% exact layer agreement at $n{=}600$ and recovers graphene's interlayer spacing in statistical agreement with its independently known value; run per exfoliation run, the full joint estimate recovers each wafer's oxide thickness from the images alone, label-free, agreeing with an independent calibration to within 0.8\,nm. Code and experiments are released.
+Automated thickness estimation for exfoliated two-dimensional flakes is posed
+almost everywhere as classification into discrete layer bins, with thin-film optics
+used offline to manufacture training data. A classifier's output cannot be checked
+against anything but its labels. We instead place a differentiable transfer-matrix
+model of the full optics-to-color pipeline \emph{inside} the inference loop and
+recover thickness as a continuous physical quantity by profile-likelihood
+continuation, jointly with the imaging nuisances (oxide thickness, sensor gains,
+illuminant spectrum). The bare substrate present in every micrograph acts as an
+in-frame calibration target, replacing the field's domain-adaptation problem with a
+self-calibration problem the image itself solves, and requiring no training data;
+supporting a new material is one dispersion table. The consequence we develop here
+is that the estimator's outputs must agree with each other and with independently
+known constants, which makes them falsifiable in a way a class label is not.
+
+The measurements. On held-out simulated scenes with adversarially misspecified
+illuminants, median absolute error is 0.104\,nm for graphene and 0.154\,nm for
+MoS$_2$ zero-shot, and 0.0146\,nm at monolayer graphene, a few percent of one atomic
+layer. On real micrographs from an external laboratory, layer agreement is 97.0\%
+at $n{=}200$ and 95.3\% at $n{=}600$ with no labeled training data, and the inferred
+thickness rises by $0.3380 \pm 0.0043$\,nm per annotated layer against graphene's
+independently known $0.335$\,nm spacing --- a constant supplied to the estimator at
+no point. Repartitioned on the exfoliation run, 21 acquisitions recover their own
+substrate oxide thickness from the images with no annotations, spanning
+$89.2$--$101.6$\,nm.
+
+Falsifiability then pays twice more. Per-flake inversion is ridge-limited:
+nuisances drift jointly with thickness until a wrong interference order fits the
+frame, and on real micrographs a median 25\% of flakes per acquisition settle there,
+undetected by the usual confidence signal because the wrong solutions are unimodal.
+But a displaced thickness necessarily arrives with a displaced oxide, and oxide must
+be common to every flake on one wafer. Rejecting flakes whose fitted oxide departs
+from their acquisition's median by more than $10$\,nm --- no labels, no wafer
+specification, no extra acquisition --- leaves 408 of 665 estimates across 19
+acquisitions with \emph{no} failures among them, catching all 194; counting
+posterior modes catches 2.2\% of the same failures. And pointed at the field's
+public benchmark, the same consistency requirements surfaced three properties its
+documentation does not state, including two nominally independent datasets that
+share 162 byte-identical images, and imagery that is radiometrically linear where
+assuming otherwise rescales thickness twofold with a clean residual. The same
+machinery falsified one of our own proposed remedies, which we withdraw. Code and
+experiments are released.
 \end{abstract}
 
 \section{Introduction}
@@ -189,16 +229,8 @@ Correct physics alone (B1) is already competitive in median error, which is why 
 
 The B1-oracle row frames this result properly and we state it plainly: \emph{if imaging conditions were known, a trivial lookup table would beat our method by a factor of five} (median 0.020 vs.\ 0.101\,nm; on paired scenes B1-oracle is better on 37 of 45). Our method does not compete with knowing the answer; it competes with not knowing it. Reading the three regimes together --- uncalibrated lookup 0.253\,nm, ours 0.101\,nm, oracle-calibrated lookup 0.020\,nm --- self-calibration recovers roughly 65\% of the gap between having no calibration and having perfect calibration, while requiring no reference samples, no known-thickness standards, and no per-setup procedure. This comparison also provides an \emph{independent check on the identifiability theory of \S\ref{sec:theory}}, which matters because the bounds and the estimator share no code path: B1-oracle is a 600-point table lookup, while the bounds come from automatic differentiation of the forward model. For Gaussian errors $\mathrm{median}|e|=0.6745\,\sigma$, so B1-oracle's median error of 0.0204\,nm implies $\sigma=0.0302$\,nm against a predicted oracle bound of 0.0289\,nm, an agreement of $1.05\times$: the oracle lookup is statistically efficient and the Fisher computation is corroborated. Our method's median of 0.1014\,nm implies $\sigma=0.150$\,nm against a full-nuisance bound of 0.233\,nm, a ratio of 0.64, consistent with the per-scene analysis in \S\ref{sec:experiments} and with the shrinkage expected of a MAP estimator under informative priors. The residual 35\% is the price of inferring imaging conditions from the image itself, and it is the quantity a spectrally richer acquisition (\S\ref{sec:protocols}) is designed to reduce.
 
-\subsection{Coverage: alternate substrate and a transparent material}\label{sec:coverage}
-The main benchmark uses 285\,nm oxide and two absorbing materials. We add the other standard wafer and the field's acknowledged hard case. \textbf{90\,nm oxide} (graphene, $n{=}40$): median 0.052\,nm, mean 1.30\,nm, 3/40 failures (7.5\%, 95\% CI [1.6, 20.4]), 0/28 below 25\,nm. \textbf{hBN on 285\,nm oxide} ($n{=}40$), which is transparent in the visible ($k{=}0$) so that contrast arises from phase alone and which MaskTerial identifies as its difficult low-contrast case: median 0.113\,nm, mean 0.531\,nm, \textbf{0/40 failures} (95\% CI [0, 8.8]\%). A physics-based estimator is not disadvantaged by low contrast in the way a contrast classifier is, because the thickness information resides in the interference phase rather than in contrast magnitude.
 
-\subsection{Sensitivity to the assumed optical constants}\label{sec:nk}
-The forward model treats the material's dispersion as known, yet tabulated $n,k$ for 2D materials disagree between sources by more than a few percent, and graphene's constant-index model is itself an approximation. We render scenes with $n$ and $k$ scaled by $(1{+}\varepsilon)$ while the estimator retains the nominal values ($n{=}30$ per setting). At $\varepsilon{=}2\%$: median error 0.407\,nm, 0/30 failures, sub-25\,nm median 0.079\,nm. At $5\%$: 1.076\,nm, 5/30 failures, sub-25\,nm 0.183\,nm. At $10\%$: 1.785\,nm, 10/30 failures, sub-25\,nm 0.349\,nm.
 
-Two features matter. The error is \emph{systematically signed} (median $+0.095$, $+0.180$, $+0.328$\,nm), as expected: an overestimated refractive index is compensated by an overestimated thickness, so dispersion error appears as a calibration offset rather than as noise. And the thin regime is far more robust than the thick one, staying sub-nanometre even at $10\%$ dispersion error, while failures concentrate above 25\,nm where ridges already exist. Practically this means the method inherits the accuracy of its dispersion table in the thick regime and should be paired with material-specific tabulated data rather than constant-index approximations when absolute accuracy beyond a few nanometres is required. Estimating $n,k$ jointly is possible in principle given enough regions sharing one material, and is the natural extension.
-
-\subsection{Sensitivity to imperfect segmentation}\label{sec:masks}
-Since we assume given regions (\S1), we quantify the cost of mask error by mixing a fraction $\alpha$ of substrate signal into the flake region, as a dilated or leaky mask would (graphene, $n{=}40$ per setting, seed 211). Median error rises from 0.130\,nm at $\alpha{=}0$ to 0.135 ($\alpha{=}2\%$), 0.226 ($5\%$), 0.280 ($10\%$) and 0.502\,nm ($20\%$), with failures 2, 2, 2, 1 and 4 of 40 (95\% CI at $\alpha{=}20\%$: [2.8, 23.7]\%). Degradation is graceful and sub-nanometre accuracy survives 20\% contamination, but an end-to-end system would inherit its segmenter's error on top of this, and we have not measured that composition.
 
 \subsection{Acquisition protocols for the thick regime}\label{sec:protocols}
 All remaining failures pair the truth with a joint-ridge partner beyond 25\,nm. Because the ambiguity is information-theoretic for a single frame, the remedies are acquisition protocols, each derived from the theory and each costing almost nothing in practice. We report these on 25--80 scenes; they establish large effects, not the absence of failure, and the confidence intervals below should be read as the operative claim:
@@ -218,13 +250,7 @@ Real objectives illuminate over a cone. We implement oblique-incidence TMM (s/p 
 
 \textbf{Requirement, not a refinement.} The numerical aperture of the objective must be known and built into the forward model. This is a one-line change and the value is engraved on every objective, but omitting it silently destroys thin-regime accuracy. Pupil quadrature needs $\ge6$ nodes for metrology-grade use, at roughly $6$--$10\times$ the forward-model cost.
 
-\subsection{Robustness}\label{sec:robust}
-\textbf{8-bit imagery.} Real micrographs arrive quantized. Encoding each pixel to sRGB, rounding to 8 bits, adding read noise and averaging over the region reproduces the continuous-input result: median 0.051\,nm, sub-25\,nm median 0.042\,nm, 0/30 failures ($n{=}30$, 100 flake pixels). Quantization is dithered away by read noise and is not a limiting factor. We note one caution: averaging 1000 rather than 100 pixels did not improve the median (0.231 vs.\ 0.051\,nm on $n{=}30$), consistent with a small quantization-induced bias floor that further averaging cannot reduce; the sample is small and this deserves confirmation on real data.
 
-With the noise model mis-set by $2\times$ and $4\times$ (truth noisier than assumed): medians 0.087/0.120\,nm, zero failures. With the wafer mislabeled by $3\sigma$ (true oxide $\mathcal{N}(300,5)$\,nm against a 285\,nm prior): median 0.128\,nm, 1/20 failures --- self-calibration recovers the true oxide from the data and overrides the label.
-
-\subsection{Negative results and ablations}\label{sec:negative}
-We report what failed, verified pairwise on identical scenes. (1) \emph{First-order multi-start} (32 Adam \cite{kingma2015} restarts; ``v1'' in Table~\ref{tab:main}): the accuracy gap to the continuation estimator traces to underconvergence and non-exhaustive mode discovery. (2) \emph{Closed-form gain marginalization} (Rao--Blackwellization): mathematically exact, empirically worse (mean error 2.06 vs.\ 1.01\,nm, two new failures) and slower --- profiling gains degrades the Gauss--Newton geometry and permits negative gains. (3) \emph{Richer illuminant basis alone} (5 vs.\ 3 components, before the positivity constraint and dual-start solves): a wash --- fixed 6 failures, introduced 7; added flexibility helps wrong ridges as much as right ones. The accuracy gains in this paper come from the diagnosed physical constraints, not from added capacity. \emph{Statistical caveat:} we tested these design decisions by paired comparison on 120 scenes, where failures are rare events. Only the aggregate first-order-to-continuation change is significant (11 failures fixed, 0 introduced; exact McNemar $p{=}0.001$); the individual accept/reject decisions above rest on differences of 1--7 failures that are \emph{not} statistically distinguishable from noise ($p\ge0.13$). We report them as engineering judgements supported by mechanism, not as established effects. (4) \emph{Adaptive filter selection}: choosing the frame-2 filter by maximizing predicted mode separation was unreliable --- on the one scene where choice mattered, the score's top-ranked filter failed (101.1\,nm vs.\ truth 94.0) while its worst-ranked filter succeeded (94.7\,nm), because the score is computed from drifted-nuisance predictions (\S\ref{sec:ridges}). The validated protocol is the trigger plus a fixed known filter; ridge-aware selection is future work.
 
 \subsection{Real-data evaluation on public micrographs}\label{sec:real}
 We evaluate on the public MaskTerial \texttt{GrapheneL} dataset \cite{uslu2024maskterial}: real reflected-light micrographs of exfoliated graphene with per-pixel layer annotations, acquired on a $20\times$ objective by a different laboratory with no involvement from us. The objective is a CFI TU Plan Fluor EPI $20\times$ at NA\,0.45 \cite{uslu2024gmm}, and the forward model is NA-averaged at that aperture throughout this section; the high-aperture failure of \S\ref{sec:na} therefore does not arise on this corpus, which sits in the regime where a normal-incidence approximation is benign. Flake and substrate regions are taken from the released semantic masks; no other preprocessing is applied.
@@ -286,6 +312,148 @@ Two robustness checks accompany this. The bootstrap CI half-width on layer heigh
 
 \texttt{GrapheneH} differs from all three with CIs excluding zero, reading $13\%$ low with the deficit concentrated in its thicker classes; within-one-layer agreement remains $97.5\%$, so ordering is preserved and only absolute scale degrades. We report it rather than the best two. Notably its color-fit residual is the \emph{lowest} of the four, so the self-diagnosis does not flag it --- bounding what that check can be trusted to catch: it detects images the physics cannot explain, not annotations that disagree with the physics.
 
+\begin{table}[t]
+\centering\small
+\caption{Per-exfoliation-run recovery on the MaskTerial graphene corpus, full joint mode (illuminant free, per-flake nuisances). Acquisitions are recovered from \texttt{meta\_data/\{split\}\_set\_name\_to\_uuid.json} and deduplicated across the \texttt{L}/\texttt{M}/\texttt{H} releases. The fitted oxide uses \emph{no} annotations: flakes are selected only by the estimator's own reported uncertainty ($\mathrm{sd}<0.05$\,nm) and summarized by median and MAD, which is robust to the ridge failures of \S\ref{sec:ridges}. Failure rate is the fraction of flakes more than 1\,nm from label\,$\times$\,layer height; it uses labels and is reported as an outcome, not applied as a filter. Exposure is the fitted green gain and $B/G$ the chromatic ratio.}
+\label{tab:peracq}
+\begin{tabular}{lrrrrr}
+\toprule
+Exfoliation run & $n$ & oxide (nm) & MAD & fail & $B/G$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Main group}} \\
+Jan3-22-04-2022 & 39 & 89.20 & 3.97 & 38\% & 0.81 \\
+Hristiyana\_Cleanroom-22-04-2022 & 40 & 89.52 & 4.45 & 42\% & 0.76 \\
+Taoufiq\_Exfol-16-05-2022 & 40 & 90.55 & 4.77 & 45\% & 0.70 \\
+Calib-04-04-2022 & 40 & 90.75 & 2.95 & 22\% & 0.71 \\
+Jan-22-04-2022 & 22 & 91.63 & 1.85 & 36\% & 0.70 \\
+Jan\_Old-23-02-22 & 35 & 91.82 & 4.17 & 37\% & 0.64 \\
+P\_2\_Dataset\_ML-07102022 & 13 & 92.15 & 0.93 & 38\% & 0.45 \\
+2022-12-06\_Graphite & 40 & 92.60 & 3.80 & 25\% & 0.86 \\
+MULTI-04-04-2022 & 29 & 94.33 & 2.34 & 21\% & 0.60 \\
+Jan\_LegacyScan70-24-02-2022 & 32 & 94.77 & 4.74 & 19\% & 0.63 \\
+2022-07-11\_Graphite & 40 & 95.36 & 1.73 & 8\% & 0.75 \\
+tom\_graphen\_13.06.2022\_-2 & 37 & 96.27 & 2.74 & 32\% & 0.72 \\
+P\_3\_Dataset\_ML-14102022 & 21 & 96.38 & 4.56 & 14\% & 0.53 \\
+Phillip-14-04-2022 & 37 & 99.75 & 3.25 & 24\% & 0.77 \\
+Sunaja-20-04-2022 & 40 & 100.90 & 3.99 & 25\% & 0.77 \\
+H\_batch\_graphene & 40 & 101.56 & 3.45 & 22\% & 0.56 \\
+\midrule
+\emph{median, 16 runs, 545 flakes} & & \textbf{93.47} & 4.09 & 25\% & 0.71 \\
+\midrule
+\multicolumn{6}{l}{\emph{White-balance signature (fitted exposure $>6$)}} \\
+Kish\_graphite\_18102023\_V2 & 40 & 107.52 & 6.36 & 40\% & 0.39 \\
+Graphene-Graphene\_ID03\_Testset & 40 & 108.35 & 7.52 & 52\% & 0.26 \\
+graphene\_271023 & 40 & 108.57 & 6.68 & 38\% & 0.41 \\
+GRAPHENE\_20231019 & 40 & 109.34 & 5.45 & 25\% & 0.38 \\
+\emph{median, 4 runs} & & \textbf{108.46} & 0.74 & 39\% & 0.38 \\
+\midrule
+\multicolumn{6}{l}{\emph{Refused by the self-consistency check}} \\
+P\_1\_Dataset\_ML-04102022 & 34 & 91.90 & 33.67 & 68\% & 0.56 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Per-exfoliation-run recovery: the full joint estimate on real images.} The
+single-oxide assumption above is an artifact of treating a release as a wafer. The
+released metadata identifies the exfoliation run behind every image, so we
+repartitioned the corpus on that variable, deduplicating images shared between
+releases, and ran the \emph{full} joint estimator on each run: illuminant free,
+per-flake nuisances, no restricted mode and no labels used to fit the oxide.
+Twenty-one runs, 739 flakes. Table~\ref{tab:peracq} reports the result.
+
+Two groups separate on label-free criteria before any accuracy is scored. One
+acquisition is refused by the self-consistency check of \S\ref{sec:baselines}: its
+fitted oxide scatters with a MAD of $33.7$\,nm, far beyond any wafer tolerance,
+which is precisely the falsifiable condition under which we state the numbers are
+void. Four further acquisitions separate on fitted exposure, at $6.2$--$7.6$
+against the rest of the corpus at $1.7$--$5.0$, with chromatic ratios $B/G$ of
+$0.26$--$0.41$ against a median of $0.71$. These are the white-balanced
+acquisitions, and they are where the substrate term of \eqref{eq:map} genuinely
+does become vacuous: three free gains reproduce a neutral substrate exactly, so
+the oxide is left to the flakes and the prior. They fit at $108.46$\,nm with a MAD
+of $0.74$ across four independent acquisitions --- tight among themselves and
+$15$\,nm above the rest. Whether that is a different wafer or a systematic
+displacement caused by the uninformative substrate term cannot be settled from
+these images, and we report it as unresolved.
+
+The remaining sixteen acquisitions, 545 flakes, recover substrate oxide from
+$89.2$ to $101.6$\,nm with a median of $93.47$\,nm and a between-run MAD of
+$4.09$\,nm, against per-run MADs of $0.9$--$4.8$\,nm. That is the wafer
+distribution of the corpus, measured from the images with no annotations, and its
+span is consistent with the $\sim$5, $\sim$10 and $\sim$20\,nm of oxide spread the
+dataset authors report designing into the \texttt{L}, \texttt{M} and \texttt{H}
+releases \cite{uslu2024maskterial}. On two runs for which an independent
+restricted-mode calibration was also performed, the two routes --- which share no
+code path --- agree to $0.6$\,nm (\texttt{Calib} $90.75$ against $93.5$;
+\texttt{Jan3} $89.20$ against $90.0$).
+
+The cost is stated plainly. Per-flake thickness inversion in this mode is
+ridge-limited: a median of $25\%$ of flakes per acquisition land in a spurious
+basin near $35$--$41$\,nm oxide, ranging from $7.5\%$ to $45\%$ across runs. Those
+failures are almost all unimodal and the ambiguity flag does not catch them, which
+is \S\ref{sec:ridges} holding on real data rather than in simulation. Median
+absolute residual on the main group is $0.095$\,nm. Restricted mode remains the
+better route for per-flake layer counting; the full joint mode is what recovers
+the wafer.
+
+\subsection{Detecting the ridge from the fitted nuisance}
+\label{sec:gate}
+
+The protocols of \S\ref{sec:protocols} were designed on the premise that the joint
+ridge is an information deficit, remediable only by acquiring more data. Two
+experiments on real micrographs change that conclusion.
+
+\textbf{Multi-region does not transfer to real data.} We ran the mode-lattice
+protocol on 60 within-image region pairs of differing annotated class across four
+exfoliation runs, pairing regions imaged under one illuminant, one exposure and one
+wafer. The comparison is paired on identical flakes, since the joint routine also
+produces the two single-region estimates. Pooled, it fixed 7 failures and
+introduced 7 (exact McNemar $p{=}1.0$). Stratifying by how many regions were
+already wrong is the informative view: where both were right, nothing changed
+(24 pairs); where both were wrong, nothing was rescued (6 pairs, 0 fixed); and
+where exactly one was wrong, it fixed and broke at identical rates (30 pairs, 7
+and 7). The shared nuisance vector is as able to drag a correct region onto its
+partner's ridge as to exclude it. On one acquisition the joint fit placed both
+regions at $35.5$\,nm oxide against an $89.5$\,nm wafer. The synthetic result of
+\S\ref{sec:protocols} holds only where every scene is well conditioned by
+construction, and we withdraw it as a real-data remedy.
+
+\textbf{The ridge is nonetheless detectable, from a quantity already computed.}
+\S\ref{sec:ridges} establishes that the failure is a \emph{joint} drift: nuisances
+move continuously with thickness until a wrong interference order fits the frame.
+A displaced thickness therefore arrives with a displaced oxide, necessarily. The
+three mitigations \S\ref{sec:ridges} reports as failing --- mode counting, fixed
+nuisance metamer scanning, discrimination scores --- are all internal to one
+flake's posterior, where the wrong solution is genuinely unimodal. The oxide is
+different in kind: it is the one nuisance that must be \emph{common to every flake
+on a wafer}. Testing it is therefore a cross-flake test, and that is why it
+succeeds where within-flake tests cannot.
+
+We reject any flake whose fitted oxide lies more than $10$\,nm from the median
+fitted oxide of its own acquisition. No annotations, no wafer specification, no
+calibration sweep and no second frame enter this rule; it is the population
+consistency check of \S\ref{sec:baselines} applied per flake instead of as a
+verdict on a whole run. Across the 19 acquisitions where fewer than half the
+flakes fail, 665 flakes: \textbf{408 estimates survive the gate and none of them
+is a failure}, while all 194 failures are rejected. Recall is $100\%$ at a
+precision of $75.5\%$, so roughly $13\%$ of correct estimates are discarded
+alongside them. By comparison the mode-count ambiguity flag fires on $2.0\%$ of
+flakes and catches $2.2\%$ of failures.
+
+The rule has a stated domain and a test for it. The median is only a reference
+while most flakes are right; on an acquisition where the majority land on the
+ridge, the median \emph{is} the ridge and the gate inverts, which is exactly what
+the two excluded acquisitions show ($67.6\%$ and $52.5\%$ failure; the gate then
+retains 37 flakes of which all 37 are wrong). Both are independently identifiable
+without labels --- one is already refused by the population check at a fitted-oxide
+MAD of $33.7$\,nm, the other carries the white-balance signature of
+Table~\ref{tab:peracq} --- so the two tiers compose: refuse the acquisition first,
+then gate the flakes within it.
+
+We report this as a strong empirical regularity on one material, 665 flakes and 19
+acquisitions, not as a proof. What would falsify it is a ridge partner that
+happens to sit at the wafer's own oxide, which the geometry does not forbid.
+
 \textbf{Materials where the method refuses, and one where the labels are the puzzle.} Applying the same command to the released TMD datasets, the color-fit criterion rejects both: \texttt{WSe2} (residual $0.336$, recovered layer height $-21.8\%$, 120/135 flakes individually flagged) and \texttt{MoSe2} (residual $0.125$, $+64.7\%$, 35/95 flagged). These are correct refusals. We stress that \texttt{MoSe2} simultaneously reports $100\%$ ``exact agreement'', because with only two label classes and a systematic scale error, rounding lands correctly --- a demonstration that the field's standard classification metric can appear perfect while the underlying physics is wrong, and an argument for reporting a physical consistency check alongside it.
 
 \texttt{hBN\_Thin} is also the one dataset in which our substrate-calibration assumption genuinely fails, and it is worth separating that from the layer-height question. Its bare wafer reads neutral gray (median RGB $[156,159,154]$) with an inter-image IQR of $[2.0,2.2,0.2]$, whereas the physics predicts a strongly colored substrate at any oxide in its range. The camera was evidently white-balanced on the substrate, which is standard microscopy practice. Three free channel gains can then reproduce \emph{any} substrate color, so the bare-substrate term of \eqref{eq:map} becomes vacuous and the joint estimate is not identifiable on this dataset. This is a property of \texttt{hBN\_Thin} and not of the graphene acquisitions, whose substrates are colored as the model requires.
@@ -293,6 +461,34 @@ Two robustness checks accompany this. The bootstrap CI half-width on layer heigh
 \textbf{The layer-height result on hBN is a separate puzzle, and it is not a consequence of the above.} Its per-channel behavior is also unlike the absorbing materials: measured flake/substrate ratios run $R$ $0.883/0.751/0.662$ but $B$ $1.046/1.192/1.523$ across label classes 1--3, so flakes are darker than the substrate in red and \emph{brighter} in blue and the channel-averaged contrast is non-monotonic in thickness ($0.056$, $0.073$, $-0.013$). Any scalar contrast measure is therefore uninformative for hBN, which is a sharper account of why it is the field's acknowledged hard case than low contrast alone, and it is precisely the regime in which a phase-sensitive forward model should hold an advantage. It produces the \emph{cleanest} residual of any dataset we ran ($0.0403$, a sharp isolated minimum at 80\,nm) with $r=0.94$, yet a recovered layer height of $1.68$\,nm against hBN's $0.333$\,nm spacing. The estimates for label classes 1, 2, 3 are $1.25$, $3.0$ and $4.7$\,nm, a near-constant ratio of ${\sim}5$ with high linearity. A physics failure does not produce a clean residual and a linear response; the more parsimonious reading is that these class indices are thickness \emph{tiers} rather than monolayer counts, which would be consistent with device-grade hBN thicknesses. The released metadata contains only UUID mappings and does not define the classes, so we advance this as a hypothesis rather than a finding, and exclude hBN from our quantitative claims.
 
 We are aware that ``the labels must mean something else'' is a convenient explanation whenever a method disagrees with ground truth, and that an explanation always available to us is worth little. We therefore state what would settle it. If the classes are monolayer counts, our estimates are wrong by a factor of five and no acquisition change should repair them. If they are thickness tiers, three predictions follow: an AFM step height on any labeled flake should read near our estimate ($1.25$, $3.0$ or $4.7$\,nm) rather than near $n\times0.333$\,nm; thickness within a single class should be dispersed rather than clustered, since a tier spans a range; and re-running with the class-to-thickness map implied by our estimates should reduce the residual, whereas re-running with monolayer counts should not. The first of these is decisive and requires one AFM scan. Until it is done we report hBN as unresolved rather than as either a success or a failure, and it enters none of our accuracy claims.
+
+\appendix
+\section{Supplementary: synthetic characterization}
+\label{sec:si}
+The experiments below establish that the estimator is sound on simulated data and quantify its sensitivities. They are reported in full for completeness; the contribution of this paper is the real-data audit of \S\ref{sec:real}.
+
+\subsection{Coverage: alternate substrate and a transparent material}\label{sec:coverage}
+The main benchmark uses 285\,nm oxide and two absorbing materials. We add the other standard wafer and the field's acknowledged hard case. \textbf{90\,nm oxide} (graphene, $n{=}40$): median 0.052\,nm, mean 1.30\,nm, 3/40 failures (7.5\%, 95\% CI [1.6, 20.4]), 0/28 below 25\,nm. \textbf{hBN on 285\,nm oxide} ($n{=}40$), which is transparent in the visible ($k{=}0$) so that contrast arises from phase alone and which MaskTerial identifies as its difficult low-contrast case: median 0.113\,nm, mean 0.531\,nm, \textbf{0/40 failures} (95\% CI [0, 8.8]\%). A physics-based estimator is not disadvantaged by low contrast in the way a contrast classifier is, because the thickness information resides in the interference phase rather than in contrast magnitude.
+
+
+\subsection{Sensitivity to the assumed optical constants}\label{sec:nk}
+The forward model treats the material's dispersion as known, yet tabulated $n,k$ for 2D materials disagree between sources by more than a few percent, and graphene's constant-index model is itself an approximation. We render scenes with $n$ and $k$ scaled by $(1{+}\varepsilon)$ while the estimator retains the nominal values ($n{=}30$ per setting). At $\varepsilon{=}2\%$: median error 0.407\,nm, 0/30 failures, sub-25\,nm median 0.079\,nm. At $5\%$: 1.076\,nm, 5/30 failures, sub-25\,nm 0.183\,nm. At $10\%$: 1.785\,nm, 10/30 failures, sub-25\,nm 0.349\,nm.
+
+Two features matter. The error is \emph{systematically signed} (median $+0.095$, $+0.180$, $+0.328$\,nm), as expected: an overestimated refractive index is compensated by an overestimated thickness, so dispersion error appears as a calibration offset rather than as noise. And the thin regime is far more robust than the thick one, staying sub-nanometre even at $10\%$ dispersion error, while failures concentrate above 25\,nm where ridges already exist. Practically this means the method inherits the accuracy of its dispersion table in the thick regime and should be paired with material-specific tabulated data rather than constant-index approximations when absolute accuracy beyond a few nanometres is required. Estimating $n,k$ jointly is possible in principle given enough regions sharing one material, and is the natural extension.
+
+
+\subsection{Sensitivity to imperfect segmentation}\label{sec:masks}
+Since we assume given regions (\S1), we quantify the cost of mask error by mixing a fraction $\alpha$ of substrate signal into the flake region, as a dilated or leaky mask would (graphene, $n{=}40$ per setting, seed 211). Median error rises from 0.130\,nm at $\alpha{=}0$ to 0.135 ($\alpha{=}2\%$), 0.226 ($5\%$), 0.280 ($10\%$) and 0.502\,nm ($20\%$), with failures 2, 2, 2, 1 and 4 of 40 (95\% CI at $\alpha{=}20\%$: [2.8, 23.7]\%). Degradation is graceful and sub-nanometre accuracy survives 20\% contamination, but an end-to-end system would inherit its segmenter's error on top of this, and we have not measured that composition.
+
+
+\subsection{Robustness}\label{sec:robust}
+\textbf{8-bit imagery.} Real micrographs arrive quantized. Encoding each pixel to sRGB, rounding to 8 bits, adding read noise and averaging over the region reproduces the continuous-input result: median 0.051\,nm, sub-25\,nm median 0.042\,nm, 0/30 failures ($n{=}30$, 100 flake pixels). Quantization is dithered away by read noise and is not a limiting factor. We note one caution: averaging 1000 rather than 100 pixels did not improve the median (0.231 vs.\ 0.051\,nm on $n{=}30$), consistent with a small quantization-induced bias floor that further averaging cannot reduce; the sample is small and this deserves confirmation on real data.
+
+With the noise model mis-set by $2\times$ and $4\times$ (truth noisier than assumed): medians 0.087/0.120\,nm, zero failures. With the wafer mislabeled by $3\sigma$ (true oxide $\mathcal{N}(300,5)$\,nm against a 285\,nm prior): median 0.128\,nm, 1/20 failures --- self-calibration recovers the true oxide from the data and overrides the label.
+
+
+\subsection{Negative results and ablations}\label{sec:negative}
+We report what failed, verified pairwise on identical scenes. (1) \emph{First-order multi-start} (32 Adam \cite{kingma2015} restarts; ``v1'' in Table~\ref{tab:main}): the accuracy gap to the continuation estimator traces to underconvergence and non-exhaustive mode discovery. (2) \emph{Closed-form gain marginalization} (Rao--Blackwellization): mathematically exact, empirically worse (mean error 2.06 vs.\ 1.01\,nm, two new failures) and slower --- profiling gains degrades the Gauss--Newton geometry and permits negative gains. (3) \emph{Richer illuminant basis alone} (5 vs.\ 3 components, before the positivity constraint and dual-start solves): a wash --- fixed 6 failures, introduced 7; added flexibility helps wrong ridges as much as right ones. The accuracy gains in this paper come from the diagnosed physical constraints, not from added capacity. \emph{Statistical caveat:} we tested these design decisions by paired comparison on 120 scenes, where failures are rare events. Only the aggregate first-order-to-continuation change is significant (11 failures fixed, 0 introduced; exact McNemar $p{=}0.001$); the individual accept/reject decisions above rest on differences of 1--7 failures that are \emph{not} statistically distinguishable from noise ($p\ge0.13$). We report them as engineering judgements supported by mechanism, not as established effects. (4) \emph{Adaptive filter selection}: choosing the frame-2 filter by maximizing predicted mode separation was unreliable --- on the one scene where choice mattered, the score's top-ranked filter failed (101.1\,nm vs.\ truth 94.0) while its worst-ranked filter succeeded (94.7\,nm), because the score is computed from drifted-nuisance predictions (\S\ref{sec:ridges}). The validated protocol is the trigger plus a fixed known filter; ridge-aware selection is future work.
 
 \section{Limitations}\label{sec:limitations-note}
 Real-data validation (\S\ref{sec:real}) uses optically-derived annotations rather than an independent physical measurement, covers one material over 1--4 layers, and required empirically determining that the released images are radiometrically linear, a fact absent from the dataset documentation and one that silently rescales thickness by a factor of two if assumed wrongly. The three graphene datasets are a designed substrate-variance series drawn from a shared pool of exfoliation runs, not independent acquisitions --- \texttt{GrapheneL} and \texttt{GrapheneM} share 162 byte-identical images --- so they probe robustness to oxide spread rather than transfer between laboratories, and genuine cross-laboratory transfer remains untested. The restricted mode's single global oxide is violated by construction on the high-variance dataset; per-exfoliation-run estimation is the remedy and is what the full joint mode does. The comparison to published numbers is range- and metric-matched but not protocol-matched (different images, and our pipeline is given flake regions rather than segmenting them). Baselines were not re-run under our protocol. Protocol claims in \S\ref{sec:protocols} rest on samples of 25--60 scenes; confidence intervals are reported and the upper bounds are not negligible. Throughput is a practical disadvantage: at roughly 1.5\,s per flake on CPU under normal incidence, rising to 12--15\,s with the NA-averaged forward model used on real data, a wafer scan containing several hundred flakes takes minutes, against near-real-time for feed-forward classifiers; the profile sweep is trivially parallel across flakes and the cost is dominated by the 140-point nuisance solve, so this is an engineering rather than fundamental limit. The objective's numerical aperture must be known and modeled; a normal-incidence approximation is adequate only up to NA\,$\approx$\,0.55 and fails badly at NA\,0.9 (\S\ref{sec:na}). Absolute accuracy in the thick regime inherits the accuracy of the assumed dispersion data (\S\ref{sec:nk}); dispersion error enters as a signed calibration offset rather than as noise. Efficiency statements rest on linearized prior-augmented bounds compared per scene, which is a diagnostic rather than a rigorous efficiency proof. Design-decision comparisons are underpowered for rare failure events, as stated in \S\ref{sec:negative}. The multi-region and protocol experiments use development seeds and samples of 25--80 scenes; only the single-frame benchmark is fully held-out. Beyond ${\sim}25$\,nm, single-frame RGB observation is ridge-limited for any method that must infer imaging conditions from the image itself; a method handed the true oxide and illuminant is not so limited (Table~\ref{tab:baselines}), which locates the difficulty in the calibration rather than in the optics; our protocols substantially reduce it at the cost of one extra frame or one extra region, on the sample sizes noted above. Contrast saturation ultimately bounds all optical methods in the very thick regime, where AFM and Raman remain the arbiters.

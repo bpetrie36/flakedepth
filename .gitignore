@@ -12,3 +12,4 @@ flakedepth_out/
 .DS_Store
 *.bak
 *.bak2
+mr_*/
