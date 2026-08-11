@@ -13,3 +13,8 @@ flakedepth_out/
 *.bak
 *.bak2
 mr_*/
+gs_*/
+gate_synth*/
+gate_sweep.py
+gate_synthetic.py
+multiregion_eval.py
